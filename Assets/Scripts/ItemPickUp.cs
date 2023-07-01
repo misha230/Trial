@@ -3,37 +3,45 @@ using UnityEngine;
 public class ItemPickUp : MonoBehaviour
 {
     public new GameObject camera;
-    public float distance = 15f;
-    private GameObject _currentItem;
-    private bool _canPickUp;
+    public Transform trans;
+    private Rigidbody _rb;
+    private RaycastHit _hit;
+    public float distance = 2f;
+    [SerializeReference] private bool flag;
+
+    private void Start()
+    {
+        _rb = GetComponent<Rigidbody>();
+    }
+
+    private void PickUp()
+    {
+        if (!Physics.Raycast(camera.transform.position, camera.transform.forward, out _hit, distance)) return;
+        if (_hit.transform.tag != "Item") return;
+        if (transform.childCount >= 1) return;
+
+        transform.SetParent(trans);
+        transform.position = trans.position;
+        transform.localEulerAngles = new Vector3(25f, 0f, 0f);
+        _rb.isKinematic = true;
+        _rb.detectCollisions = false;
+        flag = true;
+    }
+
+    private void Drop()
+    {
+        if (flag)
+        {
+            transform.parent = null;
+            _rb.isKinematic = false;
+            _rb.detectCollisions = true;
+            flag = false;
+        }
+    }
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.E)) PickUp();
         if (Input.GetKeyDown(KeyCode.G)) Drop();
-    }
-
-    private void PickUp()
-    {
-        RaycastHit hit;
-
-        if (!Physics.Raycast(camera.transform.position, camera.transform.forward, out hit, distance)) return;
-        if (hit.transform.tag != "Item") return;
-        if (_canPickUp) Drop();
-
-        _currentItem = hit.transform.gameObject;
-        _currentItem.GetComponent<Rigidbody>().isKinematic = true;
-        _currentItem.transform.parent = transform;
-        _currentItem.transform.localPosition = Vector3.zero;
-        _currentItem.transform.localEulerAngles = new Vector3(25f, 0f, 0f);
-        _canPickUp = true;
-    }
-
-    private void Drop()
-    {
-        _currentItem.transform.parent = null;
-        _currentItem.GetComponent<Rigidbody>().isKinematic = false;
-        _canPickUp = false;
-        _currentItem = null;
     }
 }
